@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE | Asset Allocation System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* --- 明亮未來科技配色 (Light Cyber-Tech) --- */
+            
+            /* 背景系：潔白、淺灰、銀色 */
+            --bg-core: #f3f6f9;        /* 整體背景：極淺灰藍 */
+            --bg-panel: #ffffff;       /* 卡片背景：純白 */
+            --bg-panel-highlight: #eef4ff; /* 高亮背景：淡藍光 */
+            
+            /* 邊框系：半透明藍 */
+            --border-dim: rgba(56, 189, 248, 0.2);
+            --border-light: rgba(56, 189, 248, 0.6);
+            
+            /* 文字系：深灰以確保閱讀性 */
+            --text-main: #1e293b;      /* Slate 800 */
+            --text-muted: #64748b;     /* Slate 500 */
+            --text-dim: #94a3b8;       /* Slate 400 */
+
+            /* 核心強調色：原本的 gold 變數映射為 電光藍/青色 */
+            --gold-primary: #0ea5e9;   /* Electric Sky Blue */
+            --gold-glow: rgba(14, 165, 233, 0.4); /* Blue Glow */
+            --gold-text: #0284c7;      /* 深一點的藍色用於文字 */
+
+            /* 狀態色 */
+            --success: #10b981;        /* Emerald Green */
+            
+            --font-ui: 'Inter', "Microsoft JhengHei", "Meiryo", sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px 16px;
+            
+            /* 科技網格背景 (淺色版) */
+            background-image: 
+                linear-gradient(var(--border-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center top;
+        }
+
+        /* 移除原本的黑色暗角，改為中心亮光 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.8) 0%, transparent 90%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .layout-container {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* --- Header --- */
+        .header-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .user-info h1 {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: var(--font-code);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        
+        .user-id {
+            font-family: var(--font-code);
+            font-size: 10px;
+            padding: 4px 8px;
+            background: #fff; /* White Pill */
+            border: 1px solid var(--border-dim);
+            border-radius: 4px;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        /* Language Toggles */
+        .lang-switch {
+            display: flex;
+            gap: 4px;
+            background: #fff;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border-dim);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-code);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover { color: var(--gold-primary); background: var(--bg-panel-highlight); }
+        
+        .lang-btn.active {
+            background: var(--gold-primary);
+            color: #fff;
+            box-shadow: 0 2px 8px var(--gold-glow);
+        }
+
+        /* --- Balance Card (Glass Effect) --- */
+        .balance-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15);
+            padding: 24px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 左側裝飾條改為漸層 */
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: linear-gradient(to bottom, var(--gold-primary), #6366f1);
+            box-shadow: 2px 0 15px var(--gold-glow);
+        }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .value-group {
+            margin-top: 12px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .currency-symbol { font-size: 24px; color: var(--gold-primary); }
+        .balance-amount {
+            font-size: 42px;
+            font-family: var(--font-code);
+            font-weight: 700;
+            letter-spacing: -1px;
+            /* 數字使用深色漸層，增加重量感 */
+            background: linear-gradient(180deg, #1e293b, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Machine (Terminal Style) --- */
+        .control-panel {
+            background: #fff;
+            border: 1px solid #fff;
+            border-radius: 16px;
+            padding: 6px;
+            /* 懸浮陰影 */
+            box-shadow: 
+                0 20px 40px -10px rgba(14, 165, 233, 0.2),
+                0 0 0 1px rgba(14, 165, 233, 0.1);
+        }
+
+        .screen-area {
+            /* 螢幕保持深色，形成對比，像是一台嵌入的終端機 */
+            background: #0f172a; 
+            border-radius: 12px;
+            height: 200px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #334155;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(14, 165, 233, 0.05) 50%, rgba(14, 165, 233, 0.05));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .main-icon {
+            font-size: 64px;
+            filter: drop-shadow(0 0 20px var(--gold-primary)); /* Icon 發藍光 */
+            z-index: 2;
+            transition: transform 0.2s;
+        }
+
+        .hash-display {
+            position: absolute;
+            bottom: 12px;
+            width: 100%;
+            text-align: center;
+            font-family: var(--font-code);
+            font-size: 9px;
+            color: var(--gold-primary); /* 文字改為科技藍 */
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .control-footer {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-primary), #3b82f6);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px -5px var(--gold-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px var(--gold-glow);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-dim);
+            padding-top: 12px;
+            font-weight: 500;
+        }
+
+        /* --- Dashboard Stats --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .stats-bar { display: flex; gap: 8px; }
+
+        .stat-box {
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--border-dim);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .stat-title { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .stat-value { font-family: var(--font-code); font-size: 13px; font-weight: 700; color: var(--gold-text); }
+
+        .list-header {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 4px;
+            font-weight: 600;
+        }
+
+        .history-container {
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .history-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .history-item:last-child { border-bottom: none; }
+        .history-item:hover { background: var(--bg-panel-highlight); }
+
+        .item-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .item-hash { font-family: var(--font-code); font-size: 9px; color: var(--text-dim); }
+
+        .item-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-code);
+        }
+
+        /* 稀有度標籤顏色微調，適應亮色背景 */
+        .tag-ssr { color: #d97706; border: 1px solid #fcd34d; background: #fffbeb; }
+        .tag-sr { color: #7c3aed; border: 1px solid #c4b5fd; background: #f5f3ff; }
+        .tag-r { color: #475569; border: 1px solid #cbd5e1; background: #f8fafc; }
+
+        .legal-text {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        /* --- Modal (Clean White Style) --- */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.1); /* 淺色遮罩 */
+            backdrop-filter: blur(12px); /* 強力模糊 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .modal-backdrop.active { opacity: 1; pointer-events: all; }
+
+        .reward-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            width: 300px;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.15);
+        }
+
+        .modal-backdrop.active .reward-card { transform: translateY(0); }
+
+        .reward-emoji { font-size: 64px; margin-bottom: 24px; display: block; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
+        .reward-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .reward-rarity { font-size: 12px; font-family: var(--font-code); letter-spacing: 2px; color: var(--gold-primary); margin-bottom: 30px; display: block; font-weight: 700;}
+        
+        .btn-close {
+            background: #f1f5f9;
+            border: none;
+            color: var(--text-main);
+            padding: 12px 32px;
+            border-radius: 99px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-close:hover { background: var(--text-main); color: #fff; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .blinking { animation: blink 1s infinite; color: var(--success); }
+
+    </style>
+</head>
+<body>
+
+    <!-- 以下 HTML 結構與 JavaScript 邏輯保持完全一致，僅需複製即可 -->
+    <div class="layout-container">
+        
+        <!-- Header Group -->
+        <header class="header-group">
+            <div class="user-info">
+                <h1>VIBE_OS // V.2.04</h1>
+                <div class="user-id">
+                    <div class="status-indicator"></div>
+                    ID: 65E7...D4D6
+                </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <!-- Language Switcher -->
+                <div class="lang-switch">
+                    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                    <button class="lang-btn" onclick="setLang('tw')">繁</button>
+                    <button class="lang-btn" onclick="setLang('cn')">简</button>
+                    <button class="lang-btn" onclick="setLang('jp')">JP</button>
+                </div>
+                <!-- Network Info -->
+                 <div class="user-id" style="color: var(--gold-text); border-color: var(--border-dim);">
+                    ETH MAINNET
+                </div>
+            </div>
+        </header>
+
+        <!-- Balance Section -->
+        <section class="balance-card">
+            <div class="label">
+                <span data-i18n="total_assets">Total Assets</span>
+                <span class="blinking">LIVE</span>
+            </div>
+            <div class="value-group">
+                <span class="currency-symbol">♦</span>
+                <span class="balance-amount" id="balance">12,450.00</span>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <section class="control-panel">
+            <div class="screen-area">
+                <div class="scanlines"></div>
+                <div class="main-icon" id="machine-icon">💠</div>
+                <div class="hash-display" id="hash-text" data-i18n="waiting">WAITING FOR SIGNATURE...</div>
+            </div>
+            <div class="control-footer">
+                <div class="meta-info" style="border:none; padding:0; margin-bottom:8px;">
+                    <span data-i18n="input_cost">INPUT COST</span>
+                    <span>100.00 ♦</span>
+                </div>
+                <button class="btn-primary" id="spin-btn" data-i18n="btn_execute">
+                    EXECUTE TRANSACTION
+                </button>
+                <div class="meta-info">
+                    <span data-i18n="fairness">PROVABLY FAIR</span>
+                    <span>SHA-256 VERIFIED</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-grid">
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="stat-title" data-i18n="ssr_rate">SSR PROBABILITY</div>
+                    <div class="stat-value">2.5%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title" data-i18n="total_mined">TOTAL MINED</div>
+                    <div class="stat-value" id="total-mined">842</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="list-header">
+                    <span data-i18n="recent_tx">RECENT TRANSACTIONS</span>
+                    <span style="font-family: var(--font-code); cursor: pointer;" data-i18n="explorer">VIEW EXPLORER →</span>
+                </div>
+                <div class="history-container" id="history-list">
+                    <div id="empty-msg" style="padding: 20px; text-align: center; font-size: 12px; color: var(--text-dim);" data-i18n="no_activity">
+                        NO RECENT ACTIVITY
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="legal-text" data-i18n="footer">
+            System operation is subject to algorithm fairness verification.<br>
+            © 2025 VIBE ASSET MANAGEMENT. ALL RIGHTS RESERVED.
+        </footer>
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" id="modal">
+        <div class="reward-card" id="reward-card">
+            <span class="reward-rarity" id="res-rarity">SSR CLASS ASSET</span>
+            <span class="reward-emoji" id="res-emoji">🦄</span>
+            <div class="reward-title" id="res-name">Neon Genesis Key</div>
+            <div style="font-size: 12px; color: #666; margin-bottom: 24px; font-family: var(--font-code);">
+                Hash: <span id="res-hash">0x...</span>
+            </div>
+            <button class="btn-close" onclick="closeModal()" data-i18n="btn_ack">ACKNOWLEDGE</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Internationalization (I18n) Configuration ---
+        const I18N = {
+            en: {
+                total_assets: "Total Assets",
+                waiting: "WAITING FOR SIGNATURE...",
+                input_cost: "INPUT COST",
+                btn_execute: "EXECUTE TRANSACTION",
+                btn_mining: "MINING BLOCK...",
+                btn_confirm: "BLOCK CONFIRMED",
+                fairness: "PROVABLY FAIR",
+                ssr_rate: "SSR PROBABILITY",
+                total_mined: "TOTAL MINED",
+                recent_tx: "RECENT TRANSACTIONS",
+                explorer: "VIEW EXPLORER →",
+                no_activity: "NO RECENT ACTIVITY",
+                footer: "System operation is subject to algorithm fairness verification.<br>© 2025 VIBE ASSET MANAGEMENT. ALL RIGHTS RESERVED.",
+                btn_ack: "ACKNOWLEDGE",
+                asset_class: "CLASS ASSET",
+                items: {
+                    item1: "Genesis Block Key",
+                    item2: "Neural Chipset",
+                    item3: "Quantum Core",
+                    item4: "Cyber Deck",
+                    item5: "Energy Cell",
+                    item6: "Data Fragment",
+                    item7: "Raw Material"
+                }
+            },
+            tw: {
+                total_assets: "總資產概覽",
+                waiting: "等待簽章中...",
+                input_cost: "交易成本",
+                btn_execute: "執行智能合約",
+                btn_mining: "區塊開採中...",
+                btn_confirm: "區塊已確認",
+                fairness: "公平性驗證",
+                ssr_rate: "SSR 獲得率",
+                total_mined: "總開採數",
+                recent_tx: "近期交易紀錄",
+                explorer: "查看區塊瀏覽器 →",
+                no_activity: "暫無交易活動",
+                footer: "系統運作受演算法公平性驗證機制監管。<br>© 2025 VIBE 資產管理系統。版權所有。",
+                btn_ack: "確認收納",
+                asset_class: "級資產",
+                items: {
+                    item1: "創世區塊金鑰",
+                    item2: "神經網路晶片",
+                    item3: "量子核心",
+                    item4: "賽博終端機",
+                    item5: "能量電池",
+                    item6: "數據碎片",
+                    item7: "基礎素材"
+                }
+            },
+            cn: {
+                total_assets: "总资产概览",
+                waiting: "等待签名中...",
+                input_cost: "交易成本",
+                btn_execute: "执行智能合约",
+                btn_mining: "区块开采中...",
+                btn_confirm: "区块已确认",
+                fairness: "公平性验证",
+                ssr_rate: "SSR 获得率",
+                total_mined: "总开采数",
+                recent_tx: "近期交易记录",
+                explorer: "查看区块浏览器 →",
+                no_activity: "暂无交易活动",
+                footer: "系统运作受算法公平性验证机制监管。<br>© 2025 VIBE 资产管理系统。版权所有。",
+                btn_ack: "确认收纳",
+                asset_class: "级资产",
+                items: {
+                    item1: "创世区块密钥",
+                    item2: "神经网络芯片",
+                    item3: "量子核心",
+                    item4: "赛博终端机",
+                    item5: "能量电池",
+                    item6: "数据碎片",
+                    item7: "基础素材"
+                }
+            },
+            jp: {
+                total_assets: "総資産残高",
+                waiting: "署名待ち...",
+                input_cost: "取引コスト",
+                btn_execute: "トランザクション実行",
+                btn_mining: "ブロック採掘中...",
+                btn_confirm: "ブロック承認完了",
+                fairness: "公平性検証済み",
+                ssr_rate: "SSR 出現率",
+                total_mined: "総採掘数",
+                recent_tx: "最近のトランザクション",
+                explorer: "エクスプローラー表示 →",
+                no_activity: "最近のアクティビティなし",
+                footer: "システムはアルゴリズムの公平性検証を受けています。<br>© 2025 VIBE Asset Management. All Rights Reserved.",
+                btn_ack: "確認する",
+                asset_class: "クラス資産",
+                items: {
+                    item1: "ジェネシス・キー",
+                    item2: "ニューラルチップ",
+                    item3: "量子コア",
+                    item4: "サイバーデッキ",
+                    item5: "エネルギーセル",
+                    item6: "データフラグメント",
+                    item7: "原材料"
+                }
+            }
+        };
+
+        let currentLang = 'en';
+
+        // --- Core Data ---
+        const ITEMS_DB = [
+            { id: 1, key: "item1", type: "SSR", emoji: "🔑", val: 5000 },
+            { id: 2, key: "item2", type: "SSR", emoji: "💾", val: 3500 },
+            { id: 3, key: "item3", type: "SR", emoji: "⚛️", val: 1200 },
+            { id: 4, key: "item4", type: "SR", emoji: "💻", val: 800 },
+            { id: 5, key: "item5", type: "R", emoji: "🔋", val: 100 },
+            { id: 6, key: "item6", type: "R", emoji: "💿", val: 50 },
+            { id: 7, key: "item7", type: "R", emoji: "🔩", val: 25 },
+        ];
+
+        let state = {
+            balance: 12450,
+            cost: 100,
+            count: 842,
+            isProcessing: false
+        };
+
+        const els = {
+            balance: document.getElementById('balance'),
+            mined: document.getElementById('total-mined'),
+            btn: document.getElementById('spin-btn'),
+            icon: document.getElementById('machine-icon'),
+            hash: document.getElementById('hash-text'),
+            history: document.getElementById('history-list'),
+            modal: document.getElementById('modal'),
+            resName: document.getElementById('res-name'),
+            resEmoji: document.getElementById('res-emoji'),
+            resRarity: document.getElementById('res-rarity'),
+            resHash: document.getElementById('res-hash'),
+            rewardCard: document.getElementById('reward-card'),
+            emptyMsg: document.getElementById('empty-msg')
+        };
+
+        // --- I18n Logic ---
+
+        function initLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage; 
+            
+            if (browserLang.toLowerCase().includes('zh-tw') || browserLang.toLowerCase().includes('hk')) {
+                setLang('tw');
+            } else if (browserLang.toLowerCase().includes('zh')) {
+                setLang('cn');
+            } else if (browserLang.toLowerCase().includes('ja')) {
+                setLang('jp');
+            } else {
+                setLang('en');
+            }
+        }
+
+        function setLang(langCode) {
+            currentLang = langCode;
+            
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const map = {'en': 0, 'tw': 1, 'cn': 2, 'jp': 3};
+            document.querySelectorAll('.lang-btn')[map[langCode]].classList.add('active');
+
+            updateTextContent();
+        }
+
+        function updateTextContent() {
+            const t = I18N[currentLang];
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(t[key]) el.innerHTML = t[key];
+            });
+
+            if(state.isProcessing) {
+                els.btn.innerText = t.btn_mining;
+            }
+
+            const historyRows = document.querySelectorAll('.history-item');
+            historyRows.forEach(row => {
+                const key = row.getAttribute('data-item-key');
+                if(key && t.items[key]) {
+                    row.querySelector('.item-name').innerText = t.items[key];
+                }
+            });
+        }
+
+        // --- Game Logic ---
+        
+        function generateHash() {
+            const chars = "0123456789ABCDEF";
+            let hash = "0x";
+            for(let i=0; i<16; i++) {
+                hash += chars[Math.floor(Math.random() * 16)];
+            }
+            return hash;
+        }
+
+        els.btn.addEventListener('click', () => {
+            if(state.isProcessing || state.balance < state.cost) return;
+
+            state.balance -= state.cost;
+            state.isProcessing = true;
+            updateUI();
+            
+            els.btn.disabled = true;
+            els.btn.innerText = I18N[currentLang].btn_mining;
+            
+            let frame = 0;
+            const interval = setInterval(() => {
+                els.hash.innerText = generateHash();
+                els.icon.style.transform = `scale(${0.9 + Math.random()*0.2})`;
+                els.icon.style.opacity = Math.random() > 0.5 ? 0.5 : 1;
+                
+                frame++;
+                if(frame > 15) {
+                    clearInterval(interval);
+                    finalizeTransaction();
+                }
+            }, 60);
+        });
+
+        function finalizeTransaction() {
+            const result = calculateDrop();
+            const txHash = generateHash();
+            state.count++;
+            
+            els.icon.style.transform = 'scale(1)';
+            els.icon.style.opacity = 1;
+            els.hash.innerText = I18N[currentLang].btn_confirm;
+            
+            showModal(result, txHash);
+            addToHistory(result, txHash);
+            
+            setTimeout(() => {
+                state.isProcessing = false;
+                els.btn.disabled = false;
+                els.btn.innerText = I18N[currentLang].btn_execute;
+                updateUI();
+            }, 500);
+        }
+
+        function calculateDrop() {
+            const rand = Math.random();
+            if(rand < 0.05) return ITEMS_DB[Math.floor(Math.random() * 2)]; // SSR
+            if(rand < 0.25) return ITEMS_DB[Math.floor(Math.random() * 2) + 2]; // SR
+            return ITEMS_DB[Math.floor(Math.random() * 3) + 4]; // R
+        }
+
+        function updateUI() {
+            els.balance.innerText = state.balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+            els.mined.innerText = state.count.toLocaleString();
+        }
+
+        function showModal(item, hash) {
+            const t = I18N[currentLang];
+            const itemName = t.items[item.key];
+
+            els.resName.innerText = itemName;
+            els.resEmoji.innerText = item.emoji;
+            els.resRarity.innerText = `${item.type} ${t.asset_class}`;
+            els.resHash.innerText = hash;
+            
+            // Adjust styles for Light Mode Modal
+            if(item.type === 'SSR') {
+                els.resRarity.style.color = '#d97706'; // Gold/Orange
+                els.rewardCard.style.border = '2px solid #fbbf24';
+                els.rewardCard.style.boxShadow = '0 10px 40px rgba(251, 191, 36, 0.3)';
+            } else if (item.type === 'SR') {
+                els.resRarity.style.color = '#7c3aed'; // Purple
+                els.rewardCard.style.border = '2px solid #a78bfa';
+                els.rewardCard.style.boxShadow = '0 10px 40px rgba(167, 139, 250, 0.3)';
+            } else {
+                els.resRarity.style.color = '#64748b'; // Slate
+                els.rewardCard.style.border = '1px solid #cbd5e1';
+                els.rewardCard.style.boxShadow = '0 10px 40px rgba(0,0,0,0.05)';
+            }
+
+            els.modal.classList.add('active');
+        }
+
+        function closeModal() {
+            els.modal.classList.remove('active');
+            els.hash.innerText = I18N[currentLang].waiting;
+        }
+
+        function addToHistory(item, hash) {
+            if(els.emptyMsg) els.emptyMsg.style.display = 'none';
+
+            const t = I18N[currentLang];
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.setAttribute('data-item-key', item.key);
+            
+            div.innerHTML = `
+                <div class="item-icon">${item.emoji}</div>
+                <div class="item-details">
+                    <div class="item-name">${t.items[item.key]}</div>
+                    <div class="item-hash">${hash}</div>
+                </div>
+                <div class="item-tag tag-${item.type.toLowerCase()}">${item.type}</div>
+            `;
+            
+            els.history.prepend(div);
+            if(els.history.children.length > 5) {
+                const children = els.history.querySelectorAll('.history-item');
+                if(children.length > 5) els.history.removeChild(children[children.length-1]);
+            }
+        }
+
+        initLanguage();
+
+    </script>
+</body>
+</html>
